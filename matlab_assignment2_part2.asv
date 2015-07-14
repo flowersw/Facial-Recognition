@@ -1,0 +1,137 @@
+% Matlab Assignment 2
+
+% Part II: Eigenfaces and Face Recognition
+
+% M-file by Dr. Jennifer Prairie
+%           Department of Mathematics
+%           University of North Carolina at Chapel Hill
+%           For Math 547 Fall 2013
+%           November 15, 2013
+
+dlist=dir;
+
+imagesum=zeros(112,92);
+m=70;
+
+for i=3:length(dlist)
+    load(dlist(i).name);
+    imagesum=imagesum+image;
+end
+
+mean_face=imagesum/m;  %mean_face (MF) of all images in the Class Face Database
+
+%Question 6
+figure
+imagesc(mean_face)
+colormap('gray')
+axis('image')
+
+for i=3:m+2
+    load(dlist(i).name);
+    B(:,:,i-2)=(image-mean_face);
+end
+
+A=reshape(B,112*92,m,1);  %A is now a an nxm matrix where n=112*92 (size of images) and m=70 (number of total images)
+C=A*A';
+X=A'*A;
+[V,D] = eig(X); %calculates the eigenvalues and eigenvectors of matrix A'*A
+eigenval=diag(D);
+eigenval=flipud(eigenval)  % eigenval contains the eigenvalues of matrix A'*A from largest to smalest
+V=fliplr(V);
+
+% #8-find covariance fractions
+S1 = sum(eigenval)
+
+%For loop to calculate fractions
+for i = 1:70
+    X5(:,i) = eigenval(i)/4.0745e+09;
+end
+X5
+% Plotting fraction vs. acutal eigenvalue
+plot(eigenval,X5);
+
+% add up fractions:
+
+
+% #9 plotting the first eigenface
+figure
+imagesc(E(:,:,1))
+colormap('gray')
+axis('image')
+
+
+ind=[1:35];   % This variable sets which eigenfaces to use in the face reconstruction process.
+              % It initially is set to ind=[1:10], meaning the first 10
+              % eigenfaces are used. 
+              % For Problem #12, you will change the number of eigenfaces
+              % you use by changing the 10 to the desired maximum
+              % eigenface number you want to include in the reconstruction
+
+
+eigenvect=V(:,ind);
+eigenfaces=A*eigenvect;
+for i=1:length(ind)
+    eigenfaces(:,i)=eigenfaces(:,i)/norm(eigenfaces(:,i));
+end
+E=reshape(eigenfaces,112,92,length(ind));
+
+% #10
+figure
+imagesc(E(:,:,35))
+colormap('gray')
+axis('image')
+
+% Reconstructs an image from the Class Face Database
+reconst=0;
+j=42; % image number from Class Face Database to reconstruct (Problem #10)
+for i=1:length(ind)
+    reconst=reconst+eigenfaces(:,i)'*A(:,j)*eigenfaces(:,i);
+end
+reconst_face=reshape(reconst,112,92);
+reconst_face=reconst_face+mean_face; % the reconstructed face
+
+figure
+imagesc(reconst_face)
+colormap('gray')
+axis('image')
+
+% Face Recognition
+
+load('test_face_043')  %Input the name of the test_face here (in single
+                       % quotes) on which you want to perform face 
+                       % recognition (Problems #12-14).
+             
+tf=image-mean_face;
+tf=reshape(tf,112*92,1);
+for i=1:length(ind)
+omega(i)=eigenfaces(:,i)'*tf;
+end
+
+for L=1:m
+    for i=1:length(ind)
+    omegaL(i)=eigenfaces(:,i)'*A(:,L);
+    end
+    dist(L)=sqrt(sum((omega-omegaL).^2));
+end
+
+% "dist" gives the Euclidean distance between the projected test_face inputed
+% on line 65 and each of the 70 faces from the Class Face Database
+
+%Plotting #12, euclidean distance
+X8 = (1:70)
+plot(dist,X8)
+
+proj_face=0;
+for i=1:length(ind)
+    proj_face=proj_face+eigenfaces(:,i)'*tf*eigenfaces(:,i);
+end
+proj_face=reshape(proj_face,112,92);
+reconst_test_face=proj_face+mean_face;  % reconst_test_face gives the
+                                        % reconstructed projected test face
+                                        % onto the space spanned by the
+                                        % specified eigenfaces
+
+% #14
+
+
+                                       
